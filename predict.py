@@ -27,16 +27,24 @@ def setup(model_name='test4_conv1D_153_one_dense_153_1557335309_1557335316'):
     return model, min_max
 
 
-def prepare(summoner_name):
+def prepare(id_or_name):
     # Trying the get the running game by the summoner Name
+    # Setting the Api key for Cassiopeia and the default region
     cass.set_riot_api_key(key)
     cass.set_default_region('EUW')
-    summoner = cass.get_summoner(name=summoner_name, region='EUW')
-    try:
-        current_game = summoner.current_match()
-    except Exception as e:
-        print(str(e))
-        return None
+    if type(id_or_name) is str:
+        summoner = cass.get_summoner(name=id_or_name, region='EUW')
+        try:
+            current_game = summoner.current_match()
+        except Exception as e:
+            print(str(e))
+            return None
+    else:
+        try:
+            current_game = cass.get_match(id_or_name, region='EUW')
+        except Exception as e:
+            print(str(e))
+            return None
     if current_game.mode == cass.data.GameMode.aram:
         print('there are no lanes in Aram')
         return None
@@ -71,9 +79,13 @@ def prepare_team(team):
     return participants, champions
 
 
-def predict(summoner_name):
+def predict(id_or_name):
+    """
+    :param id_or_name: you can insert a summoner name for predicting a live match or a matchId to analyse past matches
+    :return: dict(teams)
+    """
     model, min_max = setup()
-    prepared = prepare(summoner_name)
+    prepared = prepare(id_or_name)
     if prepared:
         teams = {}
         for data, team in prepared:
