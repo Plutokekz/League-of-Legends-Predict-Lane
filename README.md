@@ -10,8 +10,9 @@ pip install -r requirements.txt
 I really recommend the use tensorflow-gpu for the training or it will take some time to train it
 To run the training open the train.py file in you favorite python editor. You may change the name:
 ````python
-if __name__ == "__main__":
-    run('The Name')
+from tools.train import CnnTrain
+cnn = CnnTrain(data_name='data')
+cnn.run('test')
 ````
 You can also look up the Comment i tried to explain everything
 If you want to see the graphs from you model while its training you can run in the console. When you are in the
@@ -24,8 +25,10 @@ There is all ready a pre trained model in the models folder which you can use.
 To predict something you import the predict function from the predict.py file and run it with a Summoner Name.
 The Summoner have to be in a game to call the spectator api.
 ````python
-from predict import predict
-prediction = predict('SaItySurprise')
+from tools.predict import Lane
+lane = Lane("RGAPI-XXX-XXX", model_name='test4_conv1D_153_one_dense_153_1557335309_1557335316')
+prediction = lane.predict('SaItySurprise')
+prediction = lane.predict(4023710639)
 print(prediction)
 {
  'blue':
@@ -46,6 +49,6 @@ print(prediction)
     }
 }
 ````
-If xou want to know mor about the prediction feel free to read the Comments in the prediction.py file. 
+If you want to know more about the prediction feel free to read the Comments in the prediction.py file. 
 I tried to explain everything.
-If there a Questions or  any suggestions feel free to Label issues and make a pull requests
+If there a Questions or  any suggestions feel free to Label the issues and make a pull requests
