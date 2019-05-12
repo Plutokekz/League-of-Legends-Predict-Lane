@@ -52,3 +52,14 @@ print(prediction)
 If you want to know more about the prediction feel free to read the Comments in the prediction.py file. 
 I tried to explain everything.
 If there a Questions or  any suggestions feel free to Label the issues and make a pull requests
+## The Flask Module
+Install the requirements run the main.py script the the start and the first request need need some time 
+but the next's request are much faster. To predict something send a get request to 
+```
+localhost:5000/predict/NameOrMatchId
+```  
+If you want to change the port just open the main.py file and chang there:
+````python
+if __name__ == '__main__':
+    app.run(port=YourPreferredPort)
+````

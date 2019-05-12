@@ -18,21 +18,21 @@ class Lane:
 
     @staticmethod
     def _setup(model_name):
-        # Loading the model in
-        try:
-            model = load_model(f'models/{model_name}')
-        except Exception as e:
-            print(str(e))
-            exit()
-
         # Configuring the tenserflow/keras session
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-        config.log_device_placement = True      # to log device placement (on which device the operation ran)
-                                                # (nothing gets printed in Jupyter, only if you run it standalone)
+        config.log_device_placement = True  # to log device placement (on which device the operation ran)
+        # (nothing gets printed in Jupyter, only if you run it standalone)
         sess = tf.Session(config=config)
         set_session(sess)
 
+        # Loading the model in
+        try:
+            model = load_model(f'models/{model_name}')
+            model._make_predict_function()
+        except Exception as e:
+            print(str(e))
+            exit()
         # Setup the MinMaxScaler to scale the input Data right
         min_max_scaler = MinMaxScaler()
         with open('data/X.pickle', 'rb') as file:

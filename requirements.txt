@@ -2,3 +2,5 @@ tensorflow-gpu
 keras
 scikit-learn
 git+https://github.com/meraki-analytics/cassiopeia.git
+flask
+flask-restful
