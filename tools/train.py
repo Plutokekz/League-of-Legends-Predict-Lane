@@ -1,7 +1,6 @@
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, Flatten
-from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
-import tensorflow as tf
+from tensorflow.keras import Model
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, Input
+from tensorflow_core.python.keras.callbacks import ModelCheckpoint, TensorBoard
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import pickle
@@ -31,12 +30,12 @@ class CnnTrain:
         :return: None
         """
         pass
-        #config = tf.ConfigProto()
-        #config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-        #config.log_device_placement = True      # to log device placement (on which device the operation ran)
-                                                # (nothing gets printed in Jupyter, only if you run it standalone)
-        #sess = tf.Session(config=config)
-        #set_session(sess)
+        # config = tf.ConfigProto()
+        # config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+        # config.log_device_placement = True      # to log device placement (on which device the operation ran)
+        # (nothing gets printed in Jupyter, only if you run it standalone)
+        # sess = tf.Session(config=config)
+        # set_session(sess)
 
     @staticmethod
     def prepare_data(name, length=16, save=False, scale=True):
@@ -59,7 +58,7 @@ class CnnTrain:
             if len(x_line) == length:
                 X.append(np.array(x_line))
                 y_line = line_y.replace('\n', '').split(',')
-                y.append(np.array(y_line))
+                y.append(np.array(y_line, dtype=np.int32))
         X, y = np.array(X), np.array(y)
         # Scaling the Data
         if scale:
@@ -78,15 +77,16 @@ class CnnTrain:
         Preparing the model
         :return: Keras compiled model
         """
-        model = Sequential()
-        model.add(Conv1D(153, kernel_size=2, activation='relu', input_shape=(16, 1)))
-        model.add(Conv1D(153, kernel_size=2, activation='relu'))
-        model.add(Conv1D(153, kernel_size=2, activation='relu'))
-        model.add(Conv1D(153, kernel_size=2, activation='relu'))
-        model.add(Flatten())
-        model.add(Dense(153, activation='softmax'))
-        model.add(Dense(4, activation='softmax'))
-        model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+        in_put = Input(shape=(16, 1), name='Input')
+        conv1D = Conv1D(153, kernel_size=2, activation='relu', input_shape=(16, 1))(in_put)
+        conv1D = Conv1D(153, kernel_size=2, activation='relu', input_shape=(16, 1))(conv1D)
+        conv1D = Conv1D(153, kernel_size=2, activation='relu', input_shape=(16, 1))(conv1D)
+        conv1D = Conv1D(153, kernel_size=2, activation='relu', input_shape=(16, 1))(conv1D)
+        flatten = Flatten()(conv1D)
+        dense = Dense(153, activation='softmax')(flatten)
+        output = Dense(4, activation='softmax')(dense)
+        model = Model(inputs=in_put, outputs=output)
+        model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], )
         return model
 
     @staticmethod
@@ -105,13 +105,13 @@ class CnnTrain:
         # Adding a time stamp to the name so you cant all ways unique names
         name = f"{name}_{int(time.time())}"
         # Setting up Tensorboard Callback to watch the Graph of accuracy and loss
-        tensorboard = TensorBoard(log_dir=f'logs/{name}')
+        tensor_board = TensorBoard(log_dir=f'logs\{name}')
         # Setting up ModelCheckpoint the save the model on the best validation accuracy
-        checkpoint = ModelCheckpoint(f'models/{name}_{int(time.time())}', monitor='val_acc', verbose=3,
+        checkpoint = ModelCheckpoint(f'models\{name}', monitor='val_accuracy',
                                      save_best_only=True, mode='max')
         # Train the Model
         model.fit(X, y, validation_split=validation_split, epochs=epochs, batch_size=batch_size,
-                  callbacks=[tensorboard, checkpoint])
+                  shuffle=True, callbacks=[tensor_board, checkpoint])
 
     def run(self, name):
         """
@@ -123,5 +123,3 @@ class CnnTrain:
         # Train the model
         self.train(self.model, self.X, self.y, name + '4_conv1D_153_one_dense_153')
         print('training done')
-
-

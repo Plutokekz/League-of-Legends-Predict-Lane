@@ -1,5 +1,5 @@
-tensorflow-gpu
-keras
+numpy
+tensorflow
 scikit-learn
 git+https://github.com/meraki-analytics/cassiopeia.git
 flask
