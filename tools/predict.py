@@ -1,47 +1,30 @@
-import cassiopeia as cass
-from keras.models import load_model
-from keras.backend.tensorflow_backend import set_session
-import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
 import pickle
+
+import cassiopeia as cass
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import load_model
 
 
 class Lane:
 
     def __init__(self, api_key, **kwargs):
+        """
+        :param api_key:
+        :param kwargs:
+        """
         if 'model_name' in kwargs.keys():
             model_name = kwargs['model_name']
         else:
-            model_name = 'test4_conv1D_153_one_dense_153_1557335309_1557335316'
+            model_name = 'tf2.04_conv1D_153_one_dense_153_1578830710'  # 'test4_conv1D_153_one_dense_153_1557335309_1557335316'
         self.key = api_key
         self.model, self.min_max = self._setup(model_name)
 
-    @staticmethod
-    def _setup(model_name):
-        # Configuring the tenserflow/keras session
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-        config.log_device_placement = True  # to log device placement (on which device the operation ran)
-        # (nothing gets printed in Jupyter, only if you run it standalone)
-        sess = tf.Session(config=config)
-        set_session(sess)
-
-        # Loading the model in
-        try:
-            model = load_model(f'models/{model_name}')
-            model._make_predict_function()
-        except Exception as e:
-            print(str(e))
-            exit()
-        # Setup the MinMaxScaler to scale the input Data right
-        min_max_scaler = MinMaxScaler()
-        with open('data/X.pickle', 'rb') as file:
-            X = pickle.load(file)
-        min_max = min_max_scaler.fit(X)
-        return model, min_max
-
     def _prepare(self, id_or_name):
-        # Trying the get the running game by the summoner Name
+        """
+        Get's the Teams from a live game by Summoner Name or from an old Match by Match ID
+        :param id_or_name: either a Summoner Name or a Match ID
+        :return: iterator of the prepared teams; if not exits None
+        """
         # Setting the Api key for Cassiopeia and the default region
         cass.set_riot_api_key(self.key)
         cass.set_default_region('EUW')
@@ -66,16 +49,21 @@ class Lane:
             yield self._prepare_team(team), team
 
     def _prepare_team(self, team):
-        # getting the data in the right format, one input array for the network hast to look like:
-        # participant = champId, spell1Id, spell2Id
-        # [ 1, participant1, participant2, participant3, participant4, participant5]
-        # the 1 shows marks the champion which lanes get predicted, A hole team looks like this:
-        # [[ 1, participant1, participant2, participant3, participant4, participant5],
-        # [ participant1, 1, participant2, participant3, participant4, participant5],
-        # [ participant1, participant2, 1, participant3, participant4, participant5],
-        # [ participant1, participant2, participant3, 1, participant4, participant5],
-        # [ participant1, participant2, participant3, participant4, 1, participant5]]
-
+        """
+        Preparing a Team
+        getting the data in the right format, one input array for the network hast to look like:
+        participant = champId, spell1Id, spell2Id
+        [ 1, participant1, participant2, participant3, participant4, participant5]
+        the 1 shows marks the champion which lanes get predicted, A hole team looks like this:
+        [[ 1, participant1,    participant2,    participant3,    participant4,    participant5],
+        [     participant1, 1, participant2,    participant3,    participant4,    participant5],
+        [     participant1,    participant2, 1, participant3,    participant4,    participant5],
+        [     participant1,    participant2,    participant3, 1, participant4,    participant5],
+        [     participant1,    participant2,    participant3,    participant4, 1, participant5]]
+        :param team:
+        :return:
+        """
+        # the champions list a just the names of the champions to visualize it at the end
         participants, champions = [], []
         for i in range(0, 5):
             prepared_participant = []
@@ -123,3 +111,22 @@ class Lane:
                 teams[team.side.name] = prediction_dict
             return teams
 
+    def _setup(self, model_name):
+        """
+        Loading the Model and the pickled championIds for min max scaling
+        :param model_name:
+        :return: Keras model, sklearn min_mac_sclaer
+        """
+        # Loading the model in
+        try:
+            model = load_model(f'models/{model_name}')
+            # model._make_predict_function()
+        except Exception as e:
+            print(str(e))
+            exit()
+        # Setup the MinMaxScaler to scale the input Data right
+        min_max_scaler = MinMaxScaler()
+        with open('data/X.pickle', 'rb') as file:
+            X = pickle.load(file)
+        min_max = min_max_scaler.fit(X)
+        return model, min_max

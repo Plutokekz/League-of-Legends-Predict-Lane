@@ -1,10 +1,15 @@
-from tensorflow.keras import Model
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, Input
-from tensorflow_core.python.keras.callbacks import ModelCheckpoint, TensorBoard
-from sklearn.preprocessing import MinMaxScaler
-import numpy as np
+import os
 import pickle
 import time
+
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
+from tensorflow.keras import Model
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, Input
+from tensorflow_core.python.keras.backend import set_session
+from tensorflow_core.python.keras.callbacks import ModelCheckpoint, TensorBoard
 
 
 class CnnTrain:
@@ -29,13 +34,16 @@ class CnnTrain:
         whole Video Ram
         :return: None
         """
-        pass
-        # config = tf.ConfigProto()
-        # config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-        # config.log_device_placement = True      # to log device placement (on which device the operation ran)
-        # (nothing gets printed in Jupyter, only if you run it standalone)
-        # sess = tf.Session(config=config)
-        # set_session(sess)
+        config = ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.log_device_placement = True
+        session = InteractiveSession(config=config)
+        set_session(session)
+        # check if directories for models and logs exists, if not there are created
+        if not os.path.isdir("models"):
+            os.mkdir("models")
+        if not os.path.isdir("logs"):
+            os.mkdir("logs")
 
     @staticmethod
     def prepare_data(name, length=16, save=False, scale=True):
@@ -102,13 +110,14 @@ class CnnTrain:
         :param batch_size: How much data get through at once
         :return: None
         """
+
         # Adding a time stamp to the name so you cant all ways unique names
         name = f"{name}_{int(time.time())}"
         # Setting up Tensorboard Callback to watch the Graph of accuracy and loss
         tensor_board = TensorBoard(log_dir=f'logs\{name}')
         # Setting up ModelCheckpoint the save the model on the best validation accuracy
         checkpoint = ModelCheckpoint(f'models\{name}', monitor='val_accuracy',
-                                     save_best_only=True, mode='max')
+                                     mode='max')
         # Train the Model
         model.fit(X, y, validation_split=validation_split, epochs=epochs, batch_size=batch_size,
                   shuffle=True, callbacks=[tensor_board, checkpoint])
