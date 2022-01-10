@@ -1,5 +1,5 @@
 numpy
-tensorflow==2.0
+tensorflow
 scikit-learn
 git+https://github.com/meraki-analytics/cassiopeia.git
 flask
